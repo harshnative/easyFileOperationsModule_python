@@ -24,62 +24,157 @@ class easyCopy:
     @classmethod
     def copy(cls , source , destination , returnStatus = False):
 
+        
+        # for linux
         if(isOnLinux):
-            toExe = "cp " + str(source) + " " + str(destination)
 
+            newSource = source
+            newDest = destination
+            
+            # if the path is pre correct
+            yes = False
+            for i in source:
+                if(i == "\\"):
+                    yes = True
+                    break
+
+
+            # if the path is not correctly passed like projects/hello boi/ is actaully projects/hello\ boi/ 
+            if(not(yes)):
+
+                # converting the source
+                tempList = []
+                newString = ""
+                tempList = source.split("/")
+
+                for i in tempList:
+                    space = False
+                    string = ""
+                    for j in i:
+                        if(j == " "):
+                            space = True
+                            break
+
+                    if(space):
+                        tempList2 = []
+                        tempList2 = i.split(" ")
+                        for i in tempList2:
+                            string = string + i + "\\" + " "
+                        
+                        string = string[:-2]
+                    
+                    else:
+                        string = i
+                    
+                    newString = newString + string + "/"
+
+                newSource = newString[:-1]
+
+
+                # converting the destination
+                tempList.clear()
+                newString = ""
+                tempList = destination.split("/")
+
+                for i in tempList:
+                    space = False
+                    string = ""
+                    for j in i:
+                        if(j == " "):
+                            space = True
+                            break
+
+                    if(space):
+                        tempList2 = []
+                        tempList2 = i.split(" ")
+                        for i in tempList2:
+                            string = string + i + "\\" + " "
+                        
+                        string = string[:-2]
+                    
+                    else:
+                        string = i
+                    
+                    newString = newString + string + "/"
+
+                newDest = newString[:-1]
+
+
+            # making the command
+            toExe = "cp " + str(newSource) + " " + str(newDest)
+
+        # for windows
         else:
 
-            # converting the source
-            tempList = []
-            newString = ""
-            tempList = source.split("\\")
+            newSource = source
+            newDest = destination
 
-            for i in tempList:
-                space = False
-                string = ""
-                for j in i:
-                    if(j == " "):
-                        space = True
+            # if the path is pre correct
+            yes = False
+            for i in source:
+                if(i == '"'):
+                    yes = True
+                    break
 
-                if(space):
-                    string = '"' + i + '"'
-                
-                else:
-                    string = i
-                
-                newString = newString + string + "\\"
+            
+            if(not(yes)):
 
-            newSource = newString[:-1]
+                # converting the source
+                tempList = []
+                newString = ""
+                tempList = source.split("\\")
+
+                for i in tempList:
+                    space = False
+                    string = ""
+                    for j in i:
+                        if(j == " "):
+                            space = True
+                            break
+
+                    if(space):
+                        string = '"' + i + '"'
+                    
+                    else:
+                        string = i
+                    
+                    newString = newString + string + "\\"
+
+                newSource = newString[:-1]
 
 
-            # converting the destination
+                # converting the destination
 
-            tempList.clear()
-            newString = ""
-            tempList = destination.split("\\")
+                tempList.clear()
+                newString = ""
+                tempList = destination.split("\\")
 
-            for i in tempList:
-                space = False
-                string = ""
-                for j in i:
-                    if(j == " "):
-                        space = True
+                for i in tempList:
+                    space = False
+                    string = ""
+                    for j in i:
+                        if(j == " "):
+                            space = True
+                            break
 
-                if(space):
-                    string = '"' + i + '"'
-                
-                else:
-                    string = i
-                
-                newString = newString + string + "\\"
+                    if(space):
+                        string = '"' + i + '"'
+                    
+                    else:
+                        string = i
+                    
+                    newString = newString + string + "\\"
 
-            newDest = newString[:-1]
+                newDest = newString[:-1]
 
 
             # making the command
             toExe = "copy " + str(newSource) + " " + str(newDest)
         
+
         # executing the command
+        # will return True if succesfull or Return exception in form of string if the process fails if the returnStatus is False which is by default
+        # will return output message generated the system call if succesfull else return False if the returnStatus is set to True
         try:
             status = subprocess.check_output(toExe, shell=True)
             if(returnStatus):
@@ -98,12 +193,11 @@ class easyCopy:
 
 if __name__ == "__main__":
 
-    file1 = r"C:\Users\harsh\Desktop\hello.txt"
-    file1dir = r"C:\Users\harsh\Desktop\Quick launch\hello.txt"
+    # file1 = r"C:\Users\harsh\Desktop\hello.txt"
+    # file1dir = r"C:\Users\harsh\Desktop\Quick launch\hello.txt"
 
-    file2 = r"C:\Users\harsh\Desktop\MY_files\my softwares\instagram bot - find unfollowing\.git\objects\2a\9c1042772519e56e45c8f078a5ab4a1a223dd3"
-    file2dir = r"C:\Users\harsh\Desktop\9c1042772519e56e45c8f078a5ab4a1a223dd3"
+    # file2 = r"C:\Users\harsh\Desktop\MY_files\my softwares\instagram bot - find unfollowing\.git\objects\2a\9c1042772519e56e45c8f078a5ab4a1a223dd3"
+    # file2dir = r"C:\Users\harsh\Desktop\9c1042772519e56e45c8f078a5ab4a1a223dd3"
 
-    status = easyCopy.copy(file2 , file2dir , True)
-
-
+    # status = easyCopy.copy(file2 , file2dir , True)
+    pass

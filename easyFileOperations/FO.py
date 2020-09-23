@@ -1,17 +1,12 @@
-
-# global variable for operating system detection
-class GlobalDataFO:
-    isOnWindows = False
-    isOnLinux = True
-
-
-
 import platform
 import os
 from tqdm.auto import tqdm
 import subprocess
 
-
+# global variable for operating system detection
+class GlobalDataFO:
+    isOnWindows = False
+    isOnLinux = True
 
 # Checking weather the user is on windows or not
 osUsing = platform.system()
@@ -22,7 +17,54 @@ if(osUsing == "Windows"):
 
 
 
-class easyCopy:
+class GlobalMethods:
+
+
+    @classmethod
+    # function to get the files list in folder passed
+    def getSubFilesList(cls , root, files=True, dirs=False, hidden=False, relative=True, topdown=True):
+        root = os.path.join(root, '')  # add slash if not there
+        for parent, ldirs, lfiles in os.walk(root, topdown=topdown):
+            if relative:
+                parent = parent[len(root):]
+            if dirs and parent:
+                yield os.path.join(parent, '')
+            if not hidden:
+                lfiles   = [nm for nm in lfiles if not nm.startswith('.')]
+                ldirs[:] = [nm for nm in ldirs  if not nm.startswith('.')]  # in place
+            if files:
+                lfiles.sort()
+                for nm in lfiles:
+                    nm = os.path.join(parent, nm)
+                    yield nm
+
+    
+
+    @classmethod
+    # function to get the folders to be generated
+    def getFolderNameToBeGenerated(cls , pathToFile):
+        
+        if(GlobalDataFO.isOnLinux):
+            new = pathToFile.split("/")
+            lenNew = len(new)
+
+            folderPath = ""
+            for j in range(lenNew-1):
+                folderPath = folderPath + new[j] + "/"
+
+
+        else:
+            new = pathToFile.split("\\")
+            lenNew = len(new)
+
+            folderPath = ""
+            for j in range(lenNew-1):
+                folderPath = folderPath + new[j] + "\\"
+            
+        return folderPath
+
+
+class EasyCopy:
 
 
     # cls variables
@@ -46,65 +88,18 @@ class easyCopy:
 
 
     @classmethod
-    # function to set the get the files list in folder passed
-    def __getSubFilesList(cls , root, files=True, dirs=False, hidden=False, relative=True, topdown=True):
-        hidden = cls.__workWithHiddenFilesValue
-        root = os.path.join(root, '')  # add slash if not there
-        for parent, ldirs, lfiles in os.walk(root, topdown=topdown):
-            if relative:
-                parent = parent[len(root):]
-            if dirs and parent:
-                yield os.path.join(parent, '')
-            if not hidden:
-                lfiles   = [nm for nm in lfiles if not nm.startswith('.')]
-                ldirs[:] = [nm for nm in ldirs  if not nm.startswith('.')]  # in place
-            if files:
-                lfiles.sort()
-                for nm in lfiles:
-                    nm = os.path.join(parent, nm)
-                    yield nm
-
-    
-
-    @classmethod
-    # function to get the folders to be generated
-    def __getFolderNameToBeGenerated(cls , pathToFile):
-        
-        if(GlobalDataFO.isOnLinux):
-            new = pathToFile.split("/")
-            lenNew = len(new)
-
-            folderPath = ""
-            for j in range(lenNew-1):
-                folderPath = folderPath + new[j] + "/"
-
-
-        else:
-            new = pathToFile.split("\\")
-            lenNew = len(new)
-
-            folderPath = ""
-            for j in range(lenNew-1):
-                folderPath = folderPath + new[j] + "\\"
-            
-        return folderPath
-
-
-
-
-    @classmethod
     def copyDir_withoutLoading(cls , source , dest , showCopy = False , returnStatus = False):
 
         cls.errorList.clear()
 
-        for i in cls.__getSubFilesList(source):
+        for i in GlobalMethods.getSubFilesList(source , hidden=cls.__workWithHiddenFilesValue):
 
             if(GlobalDataFO.isOnLinux):
                 newSource = source + "/" + i
-                folderToBeGenerated = dest + "/" + cls.__getFolderNameToBeGenerated(i)
+                folderToBeGenerated = dest + "/" + GlobalMethods.getFolderNameToBeGenerated(i)
             else:
                 newSource = source + "\\" + i
-                folderToBeGenerated = dest + "\\" + cls.__getFolderNameToBeGenerated(i)
+                folderToBeGenerated = dest + "\\" + GlobalMethods.getFolderNameToBeGenerated(i)
 
             try:
                 os.makedirs(folderToBeGenerated)
@@ -140,7 +135,7 @@ class easyCopy:
 
         filesCount = 0
 
-        for i in cls.__getSubFilesList(source):
+        for i in GlobalMethods.getSubFilesList(source , hidden=cls.__workWithHiddenFilesValue):
             filesCount += 1
             print("\rFinding files to copy || found till now = {}".format(filesCount) , end="")
 
@@ -344,20 +339,20 @@ if __name__ == "__main__":
     # file2 = r"C:\Users\harsh\Desktop\MY_files\my softwares\instagram bot - find unfollowing\.git\objects\2a\9c1042772519e56e45c8f078a5ab4a1a223dd3"
     # file2dir = r"C:\Users\harsh\Desktop\9c1042772519e56e45c8f078a5ab4a1a223dd3"
 
-    # status = easyCopy.copy(file2 , file2dir , True)
+    # status = EasyCopy.copy(file2 , file2dir , True)
 
     source = r"Z:\docx"
     dest = r"C:\Users\harsh\Desktop\New folder"
 
     count = 0
 
-    easyCopy.workWithHiddenFiles()
+    EasyCopy.workWithHiddenFiles()
 
-    easyCopy.copyDir_withLoading(source , dest)
+    EasyCopy.copyDir_withLoading(source , dest)
 
 
-    # for i in easyCopy.copyDir_withoutLoading(source , dest , returnStatus=True):
+    # for i in EasyCopy.copyDir_withoutLoading(source , dest , returnStatus=True):
     #     print(i)
 
-    print(easyCopy.errorList)
+    print(EasyCopy.errorList)
     pass

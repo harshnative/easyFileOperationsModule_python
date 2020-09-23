@@ -1,32 +1,176 @@
 
 # global variable for operating system detection
-isOnWindows = False
-isOnLinux = True
+class GlobalDataFO:
+    isOnWindows = False
+    isOnLinux = True
+
+
 
 import platform
+import os
+from tqdm.auto import tqdm
+import subprocess
+
+
 
 # Checking weather the user is on windows or not
 osUsing = platform.system()
 
 if(osUsing == "Windows"):
-    isOnWindows = True
-    isOnLinux = False
-
-
-
-
-import subprocess
+    GlobalDataFO.isOnWindows = True
+    GlobalDataFO.isOnLinux = False
 
 
 
 class easyCopy:
+
+
+    # cls variables
+    __workWithHiddenFilesValue = False
+    errorList = []
+
+
+
+    # function to set the hidden files mode to ON
+    @classmethod
+    def workWithHiddenFiles(cls):
+        cls.__workWithHiddenFilesValue = True
+
+
+
+    # function to set the hidden files mode to OFF
+    @classmethod
+    def dontWorkWithHiddenFiles(cls):
+        cls.__workWithHiddenFilesValue = False
+
+
+
+    @classmethod
+    # function to set the get the files list in folder passed
+    def __getSubFilesList(cls , root, files=True, dirs=False, hidden=False, relative=True, topdown=True):
+        hidden = cls.__workWithHiddenFilesValue
+        root = os.path.join(root, '')  # add slash if not there
+        for parent, ldirs, lfiles in os.walk(root, topdown=topdown):
+            if relative:
+                parent = parent[len(root):]
+            if dirs and parent:
+                yield os.path.join(parent, '')
+            if not hidden:
+                lfiles   = [nm for nm in lfiles if not nm.startswith('.')]
+                ldirs[:] = [nm for nm in ldirs  if not nm.startswith('.')]  # in place
+            if files:
+                lfiles.sort()
+                for nm in lfiles:
+                    nm = os.path.join(parent, nm)
+                    yield nm
+
+    
+
+    @classmethod
+    # function to get the folders to be generated
+    def __getFolderNameToBeGenerated(cls , pathToFile):
+        
+        if(GlobalDataFO.isOnLinux):
+            new = pathToFile.split("/")
+            lenNew = len(new)
+
+            folderPath = ""
+            for j in range(lenNew-1):
+                folderPath = folderPath + new[j] + "/"
+
+
+        else:
+            new = pathToFile.split("\\")
+            lenNew = len(new)
+
+            folderPath = ""
+            for j in range(lenNew-1):
+                folderPath = folderPath + new[j] + "\\"
+            
+        return folderPath
+
+
+
+
+    @classmethod
+    def copyDir_withoutLoading(cls , source , dest , showCopy = False , returnStatus = False):
+
+        cls.errorList.clear()
+
+        for i in cls.__getSubFilesList(source):
+
+            if(GlobalDataFO.isOnLinux):
+                newSource = source + "/" + i
+                folderToBeGenerated = dest + "/" + cls.__getFolderNameToBeGenerated(i)
+            else:
+                newSource = source + "\\" + i
+                folderToBeGenerated = dest + "\\" + cls.__getFolderNameToBeGenerated(i)
+
+            try:
+                os.makedirs(folderToBeGenerated)
+            except FileExistsError:
+                pass
+
+            done = cls.copy(newSource , folderToBeGenerated , returnStatus)
+
+            if(not(returnStatus)):
+                if(done == False):
+                    toAppend = "failed to copy    " + newSource + "    to    " + folderToBeGenerated + "    with exception =    " + done
+                    cls.errorList.append(toAppend)
+
+                if(showCopy):
+                    try:
+                        yield "copying    {}    to    {}".format(newSource , folderToBeGenerated)
+                    except Exception:
+                        yield "copying    {}    to    {}".format(newSource , folderToBeGenerated)
+                else:
+                    yield
+
+            else:
+                if(done == False):
+                    yield "error"
+                else:
+                    yield str(done)
+
+
+
+
+    @classmethod
+    def copyDir_withLoading(cls , source , dest , animationChar = "#" , showFile = False , showSpaceBtw = True):
+
+        filesCount = 0
+
+        for i in cls.__getSubFilesList(source):
+            filesCount += 1
+            print("\rFinding files to copy || found till now = {}".format(filesCount) , end="")
+
+        if(showSpaceBtw):
+            print("\n")
+        else:
+            print()
+
+        loop = tqdm(total=filesCount , position=0 , leave=False)
+
+        if(showFile):
+            for i in cls.copyDir_withoutLoading(source , dest):
+                loop.set_description(i)
+                loop.update(1)
+            loop.close()
+
+        else:
+            for i in cls.copyDir_withoutLoading(source , dest):
+                loop.set_description("copying...        ")
+                loop.update(1)
+            loop.close()
+
+
 
     @classmethod
     def copy(cls , source , destination , returnStatus = False):
 
         
         # for linux
-        if(isOnLinux):
+        if(GlobalDataFO.isOnLinux):
 
             newSource = source
             newDest = destination
@@ -176,7 +320,7 @@ class easyCopy:
         # will return True if succesfull or Return exception in form of string if the process fails if the returnStatus is False which is by default
         # will return output message generated the system call if succesfull else return False if the returnStatus is set to True
         try:
-            status = subprocess.check_output(toExe, shell=True)
+            status = subprocess.check_output(toExe, shell=True , stderr=subprocess.STDOUT)
             if(returnStatus):
                 return status.decode("utf-8") 
             else:
@@ -191,6 +335,7 @@ class easyCopy:
 
 
 
+# for testing purpose
 if __name__ == "__main__":
 
     # file1 = r"C:\Users\harsh\Desktop\hello.txt"
@@ -200,4 +345,19 @@ if __name__ == "__main__":
     # file2dir = r"C:\Users\harsh\Desktop\9c1042772519e56e45c8f078a5ab4a1a223dd3"
 
     # status = easyCopy.copy(file2 , file2dir , True)
+
+    source = r"Z:\docx"
+    dest = r"C:\Users\harsh\Desktop\New folder"
+
+    count = 0
+
+    easyCopy.workWithHiddenFiles()
+
+    easyCopy.copyDir_withLoading(source , dest)
+
+
+    # for i in easyCopy.copyDir_withoutLoading(source , dest , returnStatus=True):
+    #     print(i)
+
+    print(easyCopy.errorList)
     pass

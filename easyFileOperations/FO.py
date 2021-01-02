@@ -19,6 +19,228 @@ if(osUsing == "Windows"):
 
 class GlobalMethods:
 
+    # function to check for secific file extensions and then chech whether to keep both files if the file already exist in the destination folder 
+    @classmethod
+    def keepBothFiles(cls , source , destPath , keepVideo = True , keepMusic = True , keepImg = True , customList = None , sizeMatter = True):
+        
+        toReturnAtLast = destPath
+
+        # list of video formats to check 
+        videoFormatList = [
+            'mp4' , 
+            'm4v' , 
+            'mov' , 
+            'wmv' , 
+            'flv' , 
+            'avi' , 
+            'mkv' ,
+        ]
+
+        # list of music format to check 
+        musicFormatList = [
+            'm4a' , 
+            'flac' , 
+            'mp3' , 
+            'mp4' , 
+            'wav' , 
+            'wma' , 
+            'aac' , 
+        ]
+
+        # list of img format to check 
+        imgFileFormat = [
+            'jpeg' , 
+            'jpg' , 
+            'gif' , 
+            'png' , 
+            'svg' , 
+            'eps' , 
+            'heif' , 
+            'bmp' , 
+            'webp' , 
+            'psd' , 
+            'ai' , 
+            'indd' ,
+        ]
+
+        # extracting the file format of file 
+        fileFormat = ""
+
+        for i in destPath[::-1]:
+            if(i == "."):
+                break
+            if(GlobalDataFO.isOnLinux):
+                if(i == '/'):
+                    break
+            elif(GlobalDataFO.isOnWindows):
+                if(i == "\\"):
+                    break
+            
+            fileFormat = fileFormat + i
+
+        fileFormat = fileFormat[::-1]
+
+        # if the dest path is not passed with file name then file format path will be zero 
+        if(len(fileFormat) == 0):
+            
+            # then getting the file name from the source path 
+            tempFileName = ""
+
+            for i in source[::-1]:
+                if(GlobalDataFO.isOnLinux):
+                    if(i == '/'):
+                        break
+                elif(GlobalDataFO.isOnWindows):
+                    if(i == "\\"):
+                        break
+
+                tempFileName = tempFileName + i
+
+            tempFileName = tempFileName[::-1]
+            
+            # adding the file name to destination path 
+            if(GlobalDataFO.isOnLinux):
+                if(destPath[-1] != "/"):
+                    destPath = destPath + "/" + tempFileName
+                else:
+                    destPath = destPath + tempFileName
+
+            elif(GlobalDataFO.isOnWindows):
+                if(destPath[-1] != "\\"):
+                    destPath = destPath + "\\" + tempFileName
+                else:
+                    destPath = destPath + tempFileName
+
+
+            # now the dest path is normal so we can again extract the file format 
+            fileFormat = ""
+
+            for i in destPath[::-1]:
+                if(i == "."):
+                    break
+                if(GlobalDataFO.isOnLinux):
+                    if(i == '/'):
+                        break
+                elif(GlobalDataFO.isOnWindows):
+                    if(i == "\\"):
+                        break
+                
+                fileFormat = fileFormat + i
+
+            fileFormat = fileFormat[::-1]
+
+        tempFileFormat = fileFormat
+        fileFormat = fileFormat.upper()
+
+        # file name without extension
+        fileNameWithoutExt = destPath[:len(destPath) - len(fileFormat) - 1]
+
+
+        # if the file does not already exist then just return destpath
+        if(not(os.path.isfile(destPath))):
+            return destPath
+        
+        
+        # checking the size of source and dest file
+        # if the size is same then we just replace it
+        sizeSource = os.stat(source).st_size
+        sizeDest = os.stat(destPath).st_size
+
+        if(sizeMatter and (sizeSource == sizeDest)):
+            return destPath
+        
+
+        # checking if the file is video or not
+        if(keepVideo):
+            for i in videoFormatList:
+                i = i.upper()
+                
+                # if the file is video then we need to rename
+                if(i == fileFormat):
+                    count = 0
+                    while(True):
+                        newDestPath = fileNameWithoutExt + " (" + str(count) + ")." + tempFileFormat
+                        
+                        if(not(os.path.isfile(newDestPath))):
+                            return newDestPath
+                        
+                        count += 1
+
+        if(keepMusic):
+            for i in musicFormatList:
+                i = i.upper()
+                
+                # if the file is music then we need to rename
+                if(i == fileFormat):
+                    count = 0
+                    while(True):
+                        newDestPath = fileNameWithoutExt + " (" + str(count) + ")." + tempFileFormat
+                        
+                        if(not(os.path.isfile(newDestPath))):
+                            return newDestPath
+                        
+                        count += 1
+
+        if(keepImg):
+            for i in imgFileFormat:
+                i = i.upper()
+                
+                # if the file is img then we need to rename
+                if(i == fileFormat):
+                    count = 0
+                    while(True):
+                        newDestPath = fileNameWithoutExt + " (" + str(count) + ")." + tempFileFormat
+                        
+                        if(not(os.path.isfile(newDestPath))):
+                            return newDestPath
+                        
+                        count += 1
+
+            
+        if(customList != None):
+            try:
+                for i in customList:
+                    i = i.upper()
+                    
+                    # if the file matches the format in custom list then we need to rename
+                    if(i == fileFormat):
+                        count = 0
+                        while(True):
+                            newDestPath = fileNameWithoutExt + " (" + str(count) + ")." + tempFileFormat
+                            
+                            if(not(os.path.isfile(newDestPath))):
+                                return newDestPath
+                            
+                            count += 1
+
+            except Exception as e:
+                raise Exception("function returned this error - " + str(e) + "      May be file extensions are passed wrongly")
+
+        return toReturnAtLast
+
+
+            
+
+
+    @classmethod
+    def isDrive(cls , path = None):
+        count = 0
+        if(path == None):
+            return None
+        else:
+            for i in path:
+                if((i == '\\') or (i == "/")):
+                    count += 1
+        
+        if(count <= 2):
+            return True
+        else:
+            return False
+
+
+
+
+
 
     @classmethod
     # function to get the files list in folder passed
@@ -73,6 +295,12 @@ class EasyCopy:
     # cls variables
     __workWithHiddenFilesValue = False
     errorList = []
+    keepVideoForCopy = True 
+    keepMusicForCopy = True
+    keepImgForCopy = True
+    customListForCopy = None 
+    sizeMatterForCopy = True
+    
 
 
 
@@ -80,6 +308,15 @@ class EasyCopy:
     @classmethod
     def workWithHiddenFiles(cls):
         cls.__workWithHiddenFilesValue = True
+
+    # function to set the paramerters to deal with same file name while copying
+    @classmethod
+    def setParmsForCopyFile(cls ,  keepVideo=True , keepMusic= True, keepImg=True , customList=None, sizeMatter=True):
+        cls.keepVideoForCopy = keepVideo
+        cls.keepMusicForCopy = keepMusic
+        cls.keepImgForCopy = keepImg
+        cls.customListForCopy = customList
+        cls.sizeMatterForCopy = sizeMatter
 
 
 
@@ -114,7 +351,9 @@ class EasyCopy:
                 os.makedirs(folderToBeGenerated)
             except FileExistsError:
                 pass
-
+            except PermissionError as e:
+                cls.errorList.append(str(e))
+                
             # copying the file
             done = cls.copy(newSource , folderToBeGenerated , returnStatus)
 
@@ -181,8 +420,9 @@ class EasyCopy:
         # for linux
         if(GlobalDataFO.isOnLinux):
 
+            newDest = GlobalMethods.keepBothFiles(source , destination , keepVideo=cls.keepVideoForCopy , keepMusic=cls.keepMusicForCopy , keepImg=cls.keepImgForCopy , customList=cls.customListForCopy , sizeMatter=cls.sizeMatterForCopy)
+
             newSource = source
-            newDest = destination
             
             # if the path is pre correct
             yes = False
@@ -227,7 +467,7 @@ class EasyCopy:
                 # converting the destination
                 tempList.clear()
                 newString = ""
-                tempList = destination.split("/")
+                tempList = newDest.split("/")
 
                 for i in tempList:
                     space = False
@@ -259,8 +499,9 @@ class EasyCopy:
         # for windows
         else:
 
+            # method called to check if we want to keep both files with similar names
+            newDest = GlobalMethods.keepBothFiles(source , destination , keepVideo=cls.keepVideoForCopy , keepMusic=cls.keepMusicForCopy , keepImg=cls.keepImgForCopy , customList=cls.customListForCopy , sizeMatter=cls.sizeMatterForCopy)
             newSource = source
-            newDest = destination
 
             # if the path is pre correct
             yes = False
@@ -300,7 +541,7 @@ class EasyCopy:
 
                 tempList.clear()
                 newString = ""
-                tempList = destination.split("\\")
+                tempList = newDest.split("\\")
 
                 for i in tempList:
                     space = False
@@ -320,10 +561,13 @@ class EasyCopy:
 
                 newDest = newString[:-1]
 
-
             # making the command
             toExe = "copy " + str(newSource) + " " + str(newDest)
+
+
+
         
+
 
         # executing the command
         # will return True if succesfull or Return exception in form of string if the process fails if the returnStatus is False which is by default
@@ -347,26 +591,29 @@ class EasyCopy:
 # for testing purpose
 if __name__ == "__main__":
 
-    # file1 = r"C:\Users\harsh\Desktop\hello.txt"
-    # file1dir = r"C:\Users\harsh\Desktop\Quick launch\hello.txt"
+    file1 = r"C:\Users\harsh\Desktop\101916125.png"
+    file1dir = r"C:\Users\harsh\Desktop\Quick launch\101916125.png"
 
-    # file2 = r"C:\Users\harsh\Desktop\MY_files\my softwares\instagram bot - find unfollowing\.git\objects\2a\9c1042772519e56e45c8f078a5ab4a1a223dd3"
-    # file2dir = r"C:\Users\harsh\Desktop\9c1042772519e56e45c8f078a5ab4a1a223dd3"
+    # # file2 = r"C:\Users\harsh\Desktop\MY_files\my softwares\instagram bot - find unfollowing\.git\objects\2a\9c1042772519e56e45c8f078a5ab4a1a223dd3"
+    # # file2dir = r"C:\Users\harsh\Desktop\9c1042772519e56e45c8f078a5ab4a1a223dd3"
 
-    # status = EasyCopy.copy(file2 , file2dir , True)
+    status = EasyCopy.copy(file1 , file1dir , True)
 
-    source = r"Z:\docx"
-    dest = r"C:\Users\harsh\Desktop\New folder"
+    # source = r"C:\Users\harsh\Desktop\hello"
+    # dest = r"C:\Users\harsh\Desktop\hello1"
 
-    count = 0
+    # count = 0
 
-    EasyCopy.workWithHiddenFiles()
+    # EasyCopy.workWithHiddenFiles()
 
-    EasyCopy.copyDir_withLoading(source , dest)
+    # EasyCopy.copyDir_withLoading(source , dest)
 
 
-    # for i in EasyCopy.copyDir_withoutLoading(source , dest , returnStatus=True):
+    # for i in EasyCopy.copyDir_withoutLoading(source , dest , returnStatus=False):
     #     print(i)
 
-    print(EasyCopy.errorList)
-    pass
+    # print(EasyCopy.errorList)
+
+    # for i in GlobalMethods.getSubFilesList(r"Z:\docx" , hidden=True):
+    #     print(i)
+    # pass
